@@ -161,3 +161,77 @@ func TestReadme(t *testing.T) {
 		t.Errorf("invalid output: %s", fmt.Sprintln(a, sum))
 	}
 }
+
+func TestSetForce(t *testing.T) {
+	bitarray := NewArray(1)
+	bitarray.SetForce(1024, 1)
+	bitarray.EachCb(func(idx uint64, v uint) {
+		if v != 0 && idx != 1024 {
+			t.Errorf("invalid value0: idx=%v, v=%v", idx, v)
+		}
+		if v == 0 && idx == 1024 {
+			t.Errorf("invalid value1: idx=%v, v=%v", idx, v)
+		}
+	})
+}
+
+func TestCopy(t *testing.T) {
+	a := NewArray(1)
+	a.SetForce(1024, 1)
+	b := NewArray(2)
+	b.Extend(a)
+	if b.Size() != a.Size() {
+		t.Errorf("size mismatch: a=%v, b=%v", a.Size(), b.Size())
+	}
+	if len(b.Data) == len(a.Data) {
+		t.Errorf("datasize mismatch: a=%v, b=%v", len(a.Data), len(b.Data))
+	}
+	if a.Nbits == b.Nbits {
+		t.Errorf("bitsize mismatch: a=%v, b=%v", a.Nbits, b.Nbits)
+	}
+	b.EachCb(func(idx uint64, v uint) {
+		if v != 0 && idx != 1024 {
+			t.Errorf("invalid value0: idx=%v, v=%v", idx, v)
+		}
+		if idx == 1024 && v != 1 {
+			t.Errorf("invalid value1: idx=%v, v=%v", idx, v)
+		}
+	})
+}
+
+func TestCopyNg(t *testing.T) {
+	a := NewArray(1)
+	b := NewArray(2)
+	b.SetForce(1024, 1)
+	if err := a.Extend(b); err == nil {
+		t.Errorf("copy large should be ng")
+	}
+}
+
+func TestCopyFast(t *testing.T) {
+	a := NewArray(1)
+	a.SetForce(1023, 1)
+	b := NewArray(1)
+	b.Extend(a)
+	b.Extend(a)
+	if b.Size() != a.Size()*2 {
+		t.Errorf("size mismatch: a=%v, b=%v", a.Size(), b.Size())
+	}
+	if len(b.Data) != len(a.Data)*2 {
+		t.Errorf("datasize mismatch: a=%v, b=%v", len(a.Data), len(b.Data))
+	}
+	if a.Nbits != b.Nbits {
+		t.Errorf("bitsize mismatch: a=%v, b=%v", a.Nbits, b.Nbits)
+	}
+	if v, err := b.Get(1023); err != nil || v != 1 {
+		t.Errorf("data mismatch: err=%v, v=%v", err, v)
+	}
+	if v, err := b.Get(2047); err != nil || v != 1 {
+		t.Errorf("data mismatch: err=%v, v=%v", err, v)
+	}
+	b.EachCb(func(idx uint64, v uint) {
+		if v != 0 && (idx != 1023 && idx != 2047) {
+			t.Errorf("invalid value0: idx=%v, v=%v", idx, v)
+		}
+	})
+}

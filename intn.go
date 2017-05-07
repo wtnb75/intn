@@ -35,7 +35,7 @@ func NewArraySized(nBits uint, size uint64) *Array {
 // Append appends value
 func (na *Array) Append(val ...uint) (err error) {
 	for _, v := range val {
-		if (na.curSize)%(uint64)(na.perData) == 0 {
+		if na.curSize == (uint64)(len(na.Data))*na.perData {
 			na.Data = append(na.Data, 0)
 		}
 		if err = na.rawSet(na.curSize, v); err != nil {
@@ -44,6 +44,32 @@ func (na *Array) Append(val ...uint) (err error) {
 		na.curSize++
 	}
 	return
+}
+
+func (na *Array) Shrink(n uint64) (err error) {
+	if na.curSize > n {
+		na.curSize = n
+		na.Data = na.Data[:(n+na.perData-1)/na.perData]
+		return nil
+	}
+	return fmt.Errorf("size %d >= %d", n, na.curSize)
+}
+
+func (na *Array) Extend(ext *Array) (err error) {
+	if na.Nbits < ext.Nbits {
+		return fmt.Errorf("bitsize mismatch: %d < %d", na.Nbits, ext.Nbits)
+	}
+	if na.Nbits == ext.Nbits && na.curSize == (uint64)(len(na.Data))*na.perData {
+		na.Data = append(na.Data, ext.Data...)
+		na.curSize += ext.curSize
+		return nil
+	}
+	for i := range ext.Each() {
+		if err := na.Append(i); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // Size returns size of array
@@ -58,8 +84,8 @@ func (na *Array) Capacity() uint64 {
 
 // Get returns value
 func (na *Array) Get(n uint64) (uint, error) {
-	if n > na.Capacity() {
-		return 0, fmt.Errorf("array index out of range: %d/%d", n, na.Capacity())
+	if n > na.curSize {
+		return 0, fmt.Errorf("array index out of range: %d/%d", n, na.curSize)
 	}
 	v := na.Data[n/na.perData]
 	v >>= (n % na.perData) * (uint64)(na.Nbits)
@@ -90,6 +116,18 @@ func (na *Array) Set(n uint64, val uint) (prev uint, err error) {
 	}
 	err = na.rawSet(n, val)
 	return
+}
+
+// SetForce extends array when out of range, and sets value
+func (na *Array) SetForce(n uint64, val uint) (prev uint, err error) {
+	if n >= na.curSize {
+		if n >= (uint64)(len(na.Data))*na.perData {
+			dif := (n - ((uint64)(len(na.Data)) * na.perData) + na.perData) / na.perData
+			na.Data = append(na.Data, make([]uint64, dif)...)
+		}
+		na.curSize = n + 1
+	}
+	return na.Set(n, val)
 }
 
 // Add adds value
