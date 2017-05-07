@@ -235,3 +235,17 @@ func TestCopyFast(t *testing.T) {
 		}
 	})
 }
+
+func TestShrink(t *testing.T) {
+	a := NewArraySized(1, 1024)
+	if err := a.Shrink(16); err != nil {
+		t.Errorf("shrink failed: err=%v", err)
+	}
+	if a.Size() != 16 {
+		t.Errorf("size mismatch: %d != 16", a.Size())
+	}
+	t.Logf("shrinked: %s", a)
+	if err := a.Shrink(1024); err == nil {
+		t.Errorf("shrink to smaller: should failed, err=nil")
+	}
+}
