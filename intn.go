@@ -2,6 +2,7 @@ package intn
 
 import (
 	"fmt"
+	"log"
 )
 
 // Array is n-bit integer array
@@ -14,6 +15,12 @@ type Array struct {
 
 // NewArray returns new array struct
 func NewArray(nBits uint) *Array {
+	if nBits < 1 {
+		log.Fatalf("nBits too small: %d < 1", nBits)
+	}
+	if nBits > 64 {
+		log.Fatalf("nBits too large: %d > 64", nBits)
+	}
 	ret := new(Array)
 	ret.Nbits = nBits
 	ret.perData = (uint64)(64 / nBits)
@@ -24,9 +31,7 @@ func NewArray(nBits uint) *Array {
 
 // NewArraySized returns new Array with initial size
 func NewArraySized(nBits uint, size uint64) *Array {
-	ret := new(Array)
-	ret.Nbits = nBits
-	ret.perData = uint64(64 / nBits)
+	ret := NewArray(nBits)
 	ret.Data = make([]uint64, (size+ret.perData-1)/ret.perData)
 	ret.curSize = size
 	return ret

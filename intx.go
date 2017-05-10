@@ -2,6 +2,7 @@ package intn
 
 import (
 	"fmt"
+	"log"
 	"math"
 )
 
@@ -15,6 +16,10 @@ type ArrayX struct {
 
 // NewArrayX returns new array struct
 func NewArrayX(maxv uint) *ArrayX {
+	if maxv < 2 {
+		log.Fatalf("maxval too small: %d < 2", maxv)
+		return nil
+	}
 	ret := new(ArrayX)
 	ret.MaxVal = maxv
 	for v := (uint64)(math.MaxUint64); v != 0; v /= (uint64)(maxv) {
