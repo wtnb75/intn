@@ -169,3 +169,24 @@ func TestSetXForce(t *testing.T) {
 		}
 	})
 }
+
+func Benchmark3ArrayX(b *testing.B) {
+	a := NewArrayX(3)
+	for i := uint(0); i < uint(b.N); i++ {
+		a.Append(i % 3)
+	}
+}
+
+func Benchmark5ArrayX(b *testing.B) {
+	a := NewArray(5)
+	for i := uint(0); i < uint(b.N); i++ {
+		a.Append(i % 5)
+	}
+}
+
+func Benchmark19ArrayX(b *testing.B) {
+	a := NewArray(19)
+	for i := uint(0); i < uint(b.N); i++ {
+		a.Append(i % 19)
+	}
+}

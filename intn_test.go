@@ -249,3 +249,31 @@ func TestShrink(t *testing.T) {
 		t.Errorf("shrink to smaller: should failed, err=nil")
 	}
 }
+
+func Benchmark2bArray(b *testing.B) {
+	a := NewArray(2)
+	for i := uint(0); i < uint(b.N); i++ {
+		a.Append(i % 4)
+	}
+}
+
+func Benchmark3bArray(b *testing.B) {
+	a := NewArray(3)
+	for i := uint(0); i < uint(b.N); i++ {
+		a.Append(i % 8)
+	}
+}
+
+func Benchmark8bArray(b *testing.B) {
+	a := NewArray(8)
+	for i := uint(0); i < uint(b.N); i++ {
+		a.Append(i % 256)
+	}
+}
+
+func BenchmarkUInt8(b *testing.B) {
+	a := []uint8{}
+	for i := uint(0); i < uint(b.N); i++ {
+		a = append(a, uint8(i%256))
+	}
+}
