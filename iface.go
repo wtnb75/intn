@@ -39,7 +39,7 @@ func NewArray(t ArrayType, maxval uint64, size uint64) (ret Array) {
 		break
 	case ARRAYBIT:
 		var bits uint
-		for bits = 0; (1 << bits) < maxval; bits++ {
+		for bits = 0; (1 << bits) <= maxval; bits++ {
 			// pass
 		}
 		ret = NewArrayBit(bits)

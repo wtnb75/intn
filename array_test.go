@@ -2,6 +2,7 @@ package intn
 
 import (
 	"math"
+	"reflect"
 	"testing"
 )
 
@@ -40,22 +41,99 @@ func setError(t *testing.T, a Array) {
 	}
 }
 
-func TestGetError(t *testing.T) {
+func resizeTest(t *testing.T, a Array) {
+	a.Resize(987654)
+	if a.Size() != 987654 {
+		t.Errorf("resize failed? %d vs. %d", 987654, a.Size())
+	}
+	if a.Capacity() < 987654 {
+		t.Errorf("capacity too small: %d vs. %d", 987654, a.Capacity())
+	}
+	a.Resize(10)
+	if a.Size() != 10 {
+		t.Errorf("resize failed? %d vs. %d", 10, a.Size())
+	}
+	if a.Capacity() < 10 {
+		t.Errorf("capacity too small: %d vs. %d", 10, a.Capacity())
+	}
+}
+
+func eachTest(t *testing.T, fn func(t *testing.T, ar Array)) {
 	t.Log("Array8")
-	getError(t, NewArray8())
-	t.Log("ArrayBit")
-	getError(t, NewArrayBit(3))
-	t.Log("ArrayNum")
-	getError(t, NewArrayNum(5))
+	fn(t, NewArray8())
+	t.Log("Array16")
+	fn(t, NewArray16())
+	t.Log("ArrayBit3")
+	fn(t, NewArrayBit(3))
+	t.Log("ArrayBit14")
+	fn(t, NewArrayBit(14))
+	t.Log("ArrayBit30")
+	fn(t, NewArrayBit(30))
+	t.Log("ArrayBit49")
+	fn(t, NewArrayBit(49))
+	t.Log("ArrayNum5")
+	fn(t, NewArrayNum(5))
+	t.Log("ArrayNum10")
+	fn(t, NewArrayNum(10))
+	t.Log("ArrayNum1000")
+	fn(t, NewArrayNum(1000))
+	t.Log("ArrayNum654321")
+	fn(t, NewArrayNum(6543421))
+}
+
+func TestGetError(t *testing.T) {
+	eachTest(t, getError)
 }
 
 func TestSetError(t *testing.T) {
-	t.Log("Array8")
-	setError(t, NewArray8())
-	t.Log("ArrayBit")
-	setError(t, NewArrayBit(3))
-	t.Log("ArrayNum")
-	setError(t, NewArrayNum(5))
+	eachTest(t, setError)
+}
+
+func TestResize(t *testing.T) {
+	eachTest(t, resizeTest)
+}
+
+func checkMax(t *testing.T, ar Array, expected uint64) {
+	if ar.MaxVal() != expected {
+		t.Errorf("max value of %v is not %d (%d)", reflect.TypeOf(ar), expected, ar.MaxVal())
+	}
+}
+
+func TestMaxVal(t *testing.T) {
+	// uintX
+	checkMax(t, NewArray(ARRAYUINT, 8765, 0), 65535)
+	checkMax(t, NewArray(ARRAYUINT, 123, 0), 255)
+	checkMax(t, NewArray(ARRAYUINT, 255, 0), 255)
+	checkMax(t, NewArray(ARRAYUINT, 1, 0), 255)
+	// bits
+	checkMax(t, NewArray(ARRAYBIT, 122, 0), 127)
+	checkMax(t, NewArray(ARRAYBIT, 1, 0), 1)
+	checkMax(t, NewArray(ARRAYBIT, 2, 0), 3)
+	checkMax(t, NewArray(ARRAYBIT, 8000, 0), 8191)
+	checkMax(t, NewArray(ARRAYBIT, 56, 0), 63)
+	checkMax(t, NewArray(ARRAYBIT, 32, 0), 63)
+	checkMax(t, NewArray(ARRAYBIT, 31, 0), 31)
+	checkMax(t, NewArray(ARRAYBIT, 31, 0), 31)
+	// num
+	checkMax(t, NewArray(ARRAYNUM, 31, 0), 31)
+	checkMax(t, NewArray(ARRAYNUM, 3, 0), 3)
+	checkMax(t, NewArray(ARRAYNUM, 5, 0), 5)
+	checkMax(t, NewArray(ARRAYNUM, 8191, 0), 8191)
+	checkMax(t, NewArray(ARRAYNUM, 654321, 0), 654321)
+}
+
+func testString(t *testing.T, ar Array) {
+	ar.Resize(0)
+	Push(ar, 1)
+	Push(ar, 2)
+	Push(ar, 3)
+	if ar.String() != "[1 2 3]" {
+		t.Error("invalid string:", ar)
+	}
+}
+
+func TestStringVal(t *testing.T) {
+	eachTest(t, testString)
 }
 
 func benchAppend(b *testing.B, a Array) {
@@ -83,6 +161,10 @@ func BenchmarkAppend8_noif(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		Push(ar, uint64(i%maxval))
 	}
+}
+
+func BenchmarkAppend16(b *testing.B) {
+	benchAppend(b, NewArray16())
 }
 
 func BenchmarkAppendBit8(b *testing.B) {

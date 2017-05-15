@@ -17,7 +17,6 @@ type ArrayNum struct {
 func NewArrayNum(maxv uint64) Array {
 	if maxv < 2 {
 		panic(fmt.Sprintf("maxval too small: %d < 2", maxv))
-		return nil
 	}
 	ret := new(ArrayNum)
 	ret.maxVal = maxv
@@ -27,15 +26,6 @@ func NewArrayNum(maxv uint64) Array {
 	ret.perData--
 	ret.Data = []uint64{}
 	ret.curSize = 0
-	return &(*ret)
-}
-
-// NewArrayNumSized returns new Array with initial size
-func NewArrayNumSized(maxv uint64, size uint64) Array {
-	ret := NewArrayNum(maxv).(*ArrayNum)
-	pd := uint64(ret.perData)
-	ret.Data = make([]uint64, (size+pd-1)/pd)
-	ret.curSize = size
 	return &(*ret)
 }
 
@@ -49,9 +39,11 @@ func (na *ArrayNum) Resize(n uint64) {
 		na.curSize = n
 		na.Data = na.Data[:(n+uint64(na.perData)-1)/uint64(na.perData)]
 		// clear
-		for i := na.Size(); i < na.Capacity(); i++ {
+		na.curSize = na.Capacity()
+		for i := n; i < na.Capacity(); i++ {
 			na.Set(i, 0)
 		}
+		na.curSize = n
 	} else if na.curSize < n {
 		// extend
 		plus := (n+uint64(na.perData)-1)/uint64(na.perData) - uint64(len(na.Data))

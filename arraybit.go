@@ -28,14 +28,6 @@ func NewArrayBit(nBits uint) Array {
 	return &(*ret)
 }
 
-// NewArrayBitSized returns new Array with initial size
-func NewArrayBitSized(nBits uint, size uint64) Array {
-	ret := NewArrayBit(nBits).(*ArrayBit)
-	ret.Data = make([]uint64, (size+uint64(ret.perData)-1)/uint64(ret.perData))
-	ret.curSize = size
-	return &(*ret)
-}
-
 func (na *ArrayBit) MaxVal() uint64 {
 	return (uint64(1) << na.Nbits) - 1
 }
@@ -47,7 +39,7 @@ func (na *ArrayBit) Resize(n uint64) {
 		na.Data = na.Data[:(n+uint64(na.perData)-1)/uint64(na.perData)]
 		// clear
 		for i := na.Size(); i < na.Capacity(); i++ {
-			na.Set(i, 0)
+			na.rawSet(i, 0)
 		}
 	} else if na.curSize < n {
 		// extend
@@ -78,7 +70,7 @@ func (na *ArrayBit) Get(n uint64) uint64 {
 }
 
 func (na *ArrayBit) rawSet(n uint64, val uint64) {
-	if val >= (1 << na.Nbits) {
+	if val > na.MaxVal() {
 		panic(fmt.Sprintf("overflow: %d > %d", val, 1<<na.Nbits))
 	}
 	// mask
@@ -121,24 +113,6 @@ func (na *ArrayBit) String() string {
 	return String(na)
 }
 
-func (na *ArrayBit) sum1() *ArrayBit {
-	if na.Nbits >= 32 {
-		return na
-	}
-	var mask uint64
-	for i := uint(0); i < (64 / na.Nbits / 2); i++ {
-		mask <<= (na.Nbits * 2)
-		mask |= (1 << na.Nbits) - 1
-	}
-	ret := NewArrayBitSized(na.Nbits*2, na.Size()/2+1).(*ArrayBit)
-	ret.Resize(na.Size()/2 + 1)
-	for i, v := range na.Data {
-		ret.Data[i] = v & mask
-		ret.Data[i] += (v >> na.Nbits) & mask
-	}
-	return ret
-}
-
 var maskval = [33]uint64{}
 
 func init() {
@@ -161,6 +135,7 @@ func sumv(v uint64, bits uint) uint64 {
 	return v
 }
 
+// Sum is faster sum for ArrayBit
 func (na *ArrayBit) Sum() uint64 {
 	var ret uint64
 	for _, v := range na.Data {
