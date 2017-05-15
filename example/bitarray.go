@@ -8,9 +8,9 @@ import (
 )
 
 func main() {
-	bitarray := intn.NewArray(1)
+	bitarray := intn.NewArrayBit(1)
 	for i := 0; i < 1024; i++ {
-		bitarray.Append((uint)(rand.Intn(2)))
+		intn.Push(bitarray, uint64(rand.Intn(2)))
 	}
 	fmt.Println("result:", bitarray)
 }
