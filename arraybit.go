@@ -120,3 +120,51 @@ func (na *ArrayBit) Int2Uint(val int64) uint64 {
 func (na *ArrayBit) String() string {
 	return String(na)
 }
+
+func (na *ArrayBit) sum1() *ArrayBit {
+	if na.Nbits >= 32 {
+		return na
+	}
+	var mask uint64
+	for i := uint(0); i < (64 / na.Nbits / 2); i++ {
+		mask <<= (na.Nbits * 2)
+		mask |= (1 << na.Nbits) - 1
+	}
+	ret := NewArrayBitSized(na.Nbits*2, na.Size()/2+1).(*ArrayBit)
+	ret.Resize(na.Size()/2 + 1)
+	for i, v := range na.Data {
+		ret.Data[i] = v & mask
+		ret.Data[i] += (v >> na.Nbits) & mask
+	}
+	return ret
+}
+
+var maskval = [33]uint64{}
+
+func init() {
+	maskval[0] = 0
+	for i := uint64(1); i <= 32; i++ {
+		var mask uint64
+		for j := uint64(0); j < (64 / i / 2); j++ {
+			mask <<= i * 2
+			mask |= (1 << i) - 1
+		}
+		maskval[i] = mask
+	}
+}
+
+func sumv(v uint64, bits uint) uint64 {
+	for ; bits <= 32; bits *= 2 {
+		mask := maskval[bits]
+		v = (v & mask) + ((v >> bits) & mask)
+	}
+	return v
+}
+
+func (na *ArrayBit) Sum() uint64 {
+	var ret uint64
+	for _, v := range na.Data {
+		ret += sumv(v, na.Nbits)
+	}
+	return ret
+}

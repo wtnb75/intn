@@ -27,11 +27,11 @@ const (
 func NewArray(t ArrayType, maxval uint64, size uint64) (ret Array) {
 	switch t {
 	case ARRAYUINT:
-		if maxval < math.MaxUint8 {
+		if maxval <= math.MaxUint8 {
 			ret = NewArray8()
-		} else if maxval < math.MaxUint16 {
-			// ret = NewArray16()
-		} else if maxval < math.MaxUint32 {
+		} else if maxval <= math.MaxUint16 {
+			ret = NewArray16()
+		} else if maxval <= math.MaxUint32 {
 			// ret = NewArray32()
 		} else {
 			// ret = NewArray64()
@@ -144,10 +144,68 @@ func Add(ar Array, n uint64, val uint64) (prev uint64) {
 	return
 }
 
+// AddArray means ar1 += ar2
+func AddArray(ar1 Array, ar2 Array) error {
+	if ar1.Size() != ar2.Size() {
+		return fmt.Errorf("array size mismatch: %d vs. %d", ar1.Size(), ar2.Size())
+	}
+	for i := uint64(0); i < ar1.Size(); i++ {
+		Add(ar1, i, ar2.Get(i))
+	}
+	return nil
+}
+
 // Sub subtract value
 func Sub(ar Array, n uint64, val uint64) (prev uint64) {
 	prev = ar.Get(n)
 	nextval := prev - val
 	ar.Set(n, nextval)
 	return
+}
+
+func Copy(ar Array, typ ArrayType) (ret Array) {
+	var maxval uint64
+	for i := range Each(ar) {
+		if i > maxval {
+			maxval = i
+		}
+	}
+	ret = NewArray(typ, maxval, 0)
+	Extend(ret, ar)
+	return
+}
+
+func Sum(ar Array) uint64 {
+	if a, ok := ar.(*ArrayBit); ok {
+		return a.Sum()
+	}
+	var ret uint64
+	for i := range Each(ar) {
+		ret += i
+	}
+	return ret
+}
+
+func Compare(ar1 Array, ar2 Array) int {
+	var szmin uint64
+	if ar1.Size() < ar2.Size() {
+		szmin = ar1.Size()
+	} else {
+		szmin = ar2.Size()
+	}
+	for i := uint64(0); i < szmin; i++ {
+		a1 := ar1.Get(i)
+		a2 := ar2.Get(i)
+		if a1 < a2 {
+			return 1
+		} else if a2 < a1 {
+			return -1
+		}
+	}
+	if ar1.Size() < ar2.Size() {
+		return 1
+	} else if ar2.Size() < ar1.Size() {
+		return -1
+	}
+	return 0
 }
