@@ -2,7 +2,7 @@ package main
 
 import (
 	"flag"
-	"fmt"
+	"log"
 	"math/rand"
 	"runtime"
 
@@ -11,8 +11,24 @@ import (
 
 func main() {
 	var n = flag.Int("num", 10000, "try count")
+	var atyp = flag.String("type", "ARRAYNUM", "array type")
 	flag.Parse()
-	data := intn.NewArrayBitSized(3, (uint64)(*n))
+	atypx := intn.ARRAYBIT
+	switch *atyp {
+	case "num":
+		atypx = intn.ARRAYNUM
+		break
+	case "bit":
+		atypx = intn.ARRAYBIT
+		break
+	case "uint":
+		atypx = intn.ARRAYUINT
+		break
+	default:
+		log.Println("no such type: %s ... use default", atyp)
+	}
+	log.Println("atyp:", atypx)
+	data := intn.NewArray(atypx, 7, (uint64)(*n))
 	for i := (uint64)(0); i < (uint64)(*n); i++ {
 		v := rand.Intn(6) + 1
 		data.Set(i, uint64(v))
@@ -29,8 +45,9 @@ func main() {
 		count[i-1]++
 		prev = uint(i - 1)
 	}
-	fmt.Println("data size: ", data.Size(), "capacity:", data.Capacity())
-	fmt.Println("count: ", count)
-	fmt.Println("relation: ", relation)
-	fmt.Println("memory alloc", mem.Alloc, "total", mem.TotalAlloc, "heap", mem.HeapAlloc, "sys", mem.HeapSys)
+	log.Println("sizeof: ", data.Sizeof())
+	log.Println("data size: ", data.Size(), "capacity:", data.Capacity())
+	log.Println("count: ", count)
+	log.Println("relation: ", relation)
+	log.Println("memory alloc", mem.Alloc, "total", mem.TotalAlloc, "heap", mem.HeapAlloc, "sys", mem.HeapSys)
 }

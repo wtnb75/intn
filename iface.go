@@ -17,14 +17,6 @@ type Array interface {
 	Sizeof() uint64
 }
 
-type ArrayType int
-
-const (
-	ARRAYUINT ArrayType = iota
-	ARRAYBIT
-	ARRAYNUM
-)
-
 func NewArray(t ArrayType, maxval uint64, size uint64) (ret Array) {
 	switch t {
 	case ARRAYUINT:
