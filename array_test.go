@@ -122,6 +122,35 @@ func TestMaxVal(t *testing.T) {
 	checkMax(t, NewArray(ARRAYNUM, 654321, 0), 654321)
 }
 
+func checkSizeof(t *testing.T, ar Array, expected uint64) {
+	if ar.Sizeof() != expected {
+		t.Errorf("size mismatch: %d != %d", ar.Sizeof(), expected)
+	} else {
+		t.Logf("size ok: %d = %d, %.2f", ar.Sizeof(), expected, float64(ar.Sizeof())/float64(ar.Size()))
+	}
+}
+
+func TestSizeof(t *testing.T) {
+	checkSizeof(t, NewArray(ARRAYUINT, 10, 20), 20)
+	checkSizeof(t, NewArray(ARRAYUINT, 250, 20), 20)
+	checkSizeof(t, NewArray(ARRAYUINT, 1024, 20), 40)
+	checkSizeof(t, NewArray(ARRAYUINT, 65535, 20), 40)
+
+	checkSizeof(t, NewArray(ARRAYBIT, 3, 20), 56)
+	checkSizeof(t, NewArray(ARRAYBIT, 3, 2000), 552)
+	checkSizeof(t, NewArray(ARRAYBIT, 18, 5000), 3384)
+	checkSizeof(t, NewArray(ARRAYBIT, 4, 10000), 3864)
+	checkSizeof(t, NewArray(ARRAYBIT, 1, 20000), 2552)
+	checkSizeof(t, NewArray(ARRAYBIT, 7, 20000), 7672)
+
+	checkSizeof(t, NewArray(ARRAYNUM, 3, 20), 56)
+	checkSizeof(t, NewArray(ARRAYNUM, 3, 2000), 448)
+	checkSizeof(t, NewArray(ARRAYNUM, 18, 5000), 2720)
+	checkSizeof(t, NewArray(ARRAYNUM, 4, 10000), 2632)
+	checkSizeof(t, NewArray(ARRAYNUM, 2, 20000), 2592)
+	checkSizeof(t, NewArray(ARRAYNUM, 7, 20000), 7328)
+}
+
 func testString(t *testing.T, ar Array) {
 	ar.Resize(0)
 	Push(ar, 1)

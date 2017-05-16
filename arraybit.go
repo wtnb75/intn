@@ -2,6 +2,7 @@ package intn
 
 import (
 	"fmt"
+	"unsafe"
 )
 
 // ArrayBit is n-bit integer array
@@ -12,7 +13,7 @@ type ArrayBit struct {
 	Data    []uint64
 }
 
-// NewArray returns new array struct
+// NewArrayBit returns new array struct
 func NewArrayBit(nBits uint) Array {
 	if nBits < 1 {
 		panic(fmt.Sprintf("nBits too small: %d < 1", nBits))
@@ -28,10 +29,19 @@ func NewArrayBit(nBits uint) Array {
 	return &(*ret)
 }
 
+func (na *ArrayBit) Sizeof() uint64 {
+	var ret uint64
+	ret += uint64(unsafe.Sizeof(*na))
+	ret += uint64(unsafe.Sizeof(na.Data[0])) * uint64(len(na.Data))
+	return ret
+}
+
+// MaxVal is maximum value can be store
 func (na *ArrayBit) MaxVal() uint64 {
 	return (uint64(1) << na.Nbits) - 1
 }
 
+// Resize resize array
 func (na *ArrayBit) Resize(n uint64) {
 	if na.curSize > n {
 		// shrink
@@ -44,9 +54,21 @@ func (na *ArrayBit) Resize(n uint64) {
 	} else if na.curSize < n {
 		// extend
 		plus := (n+uint64(na.perData)-1)/uint64(na.perData) - uint64(len(na.Data))
-		na.Data = append(na.Data, make([]uint64, plus)...)
+		if plus != 0 {
+			na.Data = append(na.Data, make([]uint64, plus)...)
+		}
 		na.curSize = n
 	}
+}
+
+func (na *ArrayBit) Push(v uint64) {
+	if na.curSize%uint64(na.perData) == 0 {
+		na.Data = append(na.Data, uint64(0))
+	}
+	n := na.curSize
+	na.curSize++
+	v <<= (n % uint64(na.perData)) * (uint64)(na.Nbits)
+	na.Data[n/uint64(na.perData)] |= v
 }
 
 // Size returns size of array

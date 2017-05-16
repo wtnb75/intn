@@ -2,6 +2,7 @@ package intn
 
 import (
 	"math"
+	"unsafe"
 )
 
 // Array8 is array of uint8
@@ -10,6 +11,10 @@ type Array8 []uint8
 func NewArray8() Array {
 	ret := new(Array8)
 	return &(*ret)
+}
+
+func (na *Array8) Sizeof() uint64 {
+	return uint64(unsafe.Sizeof((*na)[0])) * uint64(len(*na))
 }
 
 func (na *Array8) MaxVal() uint64 {
@@ -30,6 +35,10 @@ func (na *Array8) Resize(sz uint64) {
 	} else if sz > na.Size() {
 		(*na) = append((*na), make([]uint8, sz-na.Size())...)
 	}
+}
+
+func (na *Array8) Push(v uint64) {
+	(*na) = append(*na, uint8(v))
 }
 
 func (na *Array8) Get(idx uint64) uint64 {

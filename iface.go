@@ -14,6 +14,7 @@ type Array interface {
 	Resize(s uint64)
 	Get(idx uint64) uint64
 	Set(idx uint64, val uint64) uint64
+	Sizeof() uint64
 }
 
 type ArrayType int
@@ -66,6 +67,11 @@ func String(ar Array) string {
 
 // Pop get last value and shrink
 func Pop(ar Array) uint64 {
+	if a, ok := ar.(interface {
+		Pop() uint64
+	}); ok {
+		return a.Pop()
+	}
 	ret := ar.Get(ar.Size() - 1)
 	ar.Resize(ar.Size() - 1)
 	return ret
@@ -73,6 +79,12 @@ func Pop(ar Array) uint64 {
 
 // Push appends value
 func Push(ar Array, v uint64) {
+	if a, ok := ar.(interface {
+		Push(uint64)
+	}); ok {
+		a.Push(v)
+		return
+	}
 	sz := ar.Size()
 	ar.Resize(sz + 1)
 	ar.Set(sz, v)
@@ -119,6 +131,11 @@ func SetForce(ar Array, idx uint64, val uint64) (prev uint64, err error) {
 
 // Each returns channel to get each value
 func Each(ar Array) <-chan uint64 {
+	if a, ok := ar.(interface {
+		Each() <-chan uint64
+	}); ok {
+		return a.Each()
+	}
 	ch := make(chan uint64)
 	go func() {
 		for i := (uint64)(0); i < ar.Size(); i++ {
@@ -131,6 +148,12 @@ func Each(ar Array) <-chan uint64 {
 
 // EachCb calls callback with each index and value as arguments
 func EachCb(ar Array, cb func(uint64, uint64)) {
+	if a, ok := ar.(interface {
+		EachCb(cb func(uint64, uint64))
+	}); ok {
+		a.EachCb(cb)
+		return
+	}
 	for i := (uint64)(0); i < ar.Size(); i++ {
 		cb(i, ar.Get(i))
 	}
@@ -176,7 +199,9 @@ func Copy(ar Array, typ ArrayType) (ret Array) {
 }
 
 func Sum(ar Array) uint64 {
-	if a, ok := ar.(*ArrayBit); ok {
+	if a, ok := ar.(interface {
+		Sum() uint64
+	}); ok {
 		return a.Sum()
 	}
 	var ret uint64

@@ -3,6 +3,7 @@ package intn
 import (
 	"fmt"
 	"math"
+	"unsafe"
 )
 
 // ArrayNum is integer array with max value
@@ -29,6 +30,13 @@ func NewArrayNum(maxv uint64) Array {
 	return &(*ret)
 }
 
+func (na *ArrayNum) Sizeof() uint64 {
+	var ret uint64
+	ret += uint64(unsafe.Sizeof(*na))
+	ret += uint64(unsafe.Sizeof(na.Data[0])) * uint64(len(na.Data))
+	return ret
+}
+
 func (na *ArrayNum) MaxVal() uint64 {
 	return na.maxVal
 }
@@ -50,6 +58,19 @@ func (na *ArrayNum) Resize(n uint64) {
 		na.Data = append(na.Data, make([]uint64, plus)...)
 		na.curSize = n
 	}
+}
+
+func (na *ArrayNum) Push(v uint64) {
+	if na.curSize%uint64(na.perData) == 0 {
+		na.Data = append(na.Data, uint64(0))
+	}
+	n := na.curSize
+	na.curSize++
+	val64 := v
+	for i := uint64(0); i < n%uint64(na.perData); i++ {
+		val64 *= uint64(na.maxVal)
+	}
+	na.Data[n/uint64(na.perData)] += val64
 }
 
 // Size returns size of array
