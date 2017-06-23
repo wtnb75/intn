@@ -1,7 +1,10 @@
 package intn
 
 import (
+	"bytes"
+	"encoding/gob"
 	"math"
+	"math/rand"
 	"reflect"
 	"testing"
 )
@@ -163,6 +166,38 @@ func testString(t *testing.T, ar Array) {
 
 func TestStringVal(t *testing.T) {
 	eachTest(t, testString)
+}
+
+func testGob(t *testing.T, ar Array, ty ArrayType) {
+	var buf bytes.Buffer
+	enc := gob.NewEncoder(&buf)
+	if err := enc.Encode(ar); err != nil {
+		t.Error("encode error", err)
+	} else {
+		t.Log("encode ok")
+	}
+
+	dec := gob.NewDecoder(&buf)
+	ar2 := NewArray(ty, ar.MaxVal(), ar.Size())
+	if err := dec.Decode(ar2); err != nil {
+		t.Error("decode error", err)
+	} else {
+		t.Log("decode ok")
+	}
+
+	for i := uint64(0); i < ar.Size(); i++ {
+		if ar.Get(i) != ar2.Get(i) {
+			t.Error("mismatch", i, ar.Get(i), ar2.Get(i))
+		}
+	}
+}
+
+func TestGob1(t *testing.T) {
+	ar := NewArray(ARRAYBIT, 10, 0)
+	for i := 0; i < 100000; i++ {
+		Push(ar, uint64(rand.Int())%ar.MaxVal())
+	}
+	testGob(t, ar, ARRAYBIT)
 }
 
 func benchAppend(b *testing.B, a Array) {
